@@ -9,8 +9,6 @@
 
   <ItemGroup>
     <PackageReference Include="DevExpressMvvm" Version="22.1.3" />
-    <PackageReference Include="DotNetProjects.MjpegProcessor" Version="2.0.7" />
-    <PackageReference Include="MJPEG-Decoder" Version="1.2.0" />
   </ItemGroup>
 
 </Project>
