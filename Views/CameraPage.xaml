@@ -1,0 +1,37 @@
+﻿<Page x:Class="Macroscope.Views.CameraPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:Macroscope.Views" xmlns:viewmodels="clr-namespace:Macroscope.ViewModels" d:DataContext="{d:DesignInstance Type=viewmodels:CameraPageViewModel}"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="Video Player" Height="450" Width="800">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,10">
+            <TextBlock Text="Video Player" FontSize="20" FontWeight="Bold"/>
+        </StackPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="1">
+                <Button Content="Просмотр камеры" 
+                        Background="Green" Foreground="White" FontWeight="Bold"
+                        Command="{Binding      ShowVideo}" Margin="270,0,287,350" />
+
+                <Image Source="{Binding VideoImage}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                       Margin="10,40,10,10" Stretch="Fill" />
+            </Grid>
+        </Grid>
+    </Grid>
+</Page>
