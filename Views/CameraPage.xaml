@@ -29,8 +29,17 @@
                         Background="Green" Foreground="White" FontWeight="Bold"
                         Command="{Binding      ShowVideo}" Margin="270,0,287,350" />
 
-                <Image Source="{Binding VideoImage}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                       Margin="10,40,10,10" Stretch="Fill" />
+                <Image Source="{Binding VideoImage}"
+                       Margin="-44,73,-3,-79" Stretch="Fill" RenderTransformOrigin="0.5,0.5" >
+                    <Image.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform/>
+                            <RotateTransform Angle="0.317"/>
+                            <TranslateTransform/>
+                        </TransformGroup>
+                    </Image.RenderTransform>
+                </Image>
 
 
             </Grid>

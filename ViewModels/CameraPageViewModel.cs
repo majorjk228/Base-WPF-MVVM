@@ -1,19 +1,24 @@
 ﻿using DevExpress.Mvvm;
 using System;
 using System.IO;
-using System.Net;
-using System.Text;
+using System.Net.Http;
+using System.Net.Mime;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Controls;
 using System.Windows.Media.Imaging;
-
-
 
 
 namespace Macroscope.ViewModels;
 
 public class CameraPageViewModel : ViewModelBase
 {
+    private CancellationTokenSource cancellationTokenSource;
+
+    private static readonly object memoryStreamLock = new object();
+
     private BitmapImage _videoImage;
 
     public BitmapImage VideoImage
@@ -33,49 +38,62 @@ public class CameraPageViewModel : ViewModelBase
 
     private async void UpdateVideoStream()
     {
+        cancellationTokenSource = new CancellationTokenSource();
+
+        string url =
+            "http://demo.macroscop.com:8080/mobile?login=root&channelid=2016897c-8be5-4a80-b1a3-7f79a9ec729c&resolutionX=640&resolutionY=480&fps=25";
+
+        using (var httpClient = new HttpClient())
+        {
+            try
+            {
+                using (var stream = await httpClient.GetStreamAsync(url).ConfigureAwait(false))
+                using (var memoryStream = new MemoryStream())
+                {
+                    var buffer = new byte[1024];
+                    int bytesRead;
+
+                    while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationTokenSource.Token).ConfigureAwait(false)) > 0)
+                    {
+                        memoryStream.Write(buffer, 0, bytesRead);
+
+                        byte[] frameBytes = await memoryStream.TryGetMjpegFrameAsync();
+                        if (frameBytes != null)
+                        {
+                            Application.Current.Dispatcher.Invoke(() => { DisplayFrame(frameBytes); });
+
+                            // Сброс memoryStream для следующего кадра
+                            memoryStream.SetLength(0);
+                            memoryStream.Seek(0, SeekOrigin.Begin);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error occurred: {ex.Message}");
+            }
+        }
+    }
+
+    private void DisplayFrame(byte[] frameBytes)
+    {
         try
         {
-
-            // Создаем объект-запрос
-            WebRequest request =
-                WebRequest.Create(
-                    "http://demo.macroscop.com:8080/mobile?login=root&channelid=2016897c-8be5-4a80-b1a3-7f79a9ec729c&resolutionX=640&resolutionY=480&fps=25");
-
-            // Получаем ответ от сервера
-            using (WebResponse response = await request.GetResponseAsync())
+            using (MemoryStream memoryStream = new MemoryStream(frameBytes))
             {
-                using (Stream stream = response.GetResponseStream())
-                {
-                    byte[] buffer = new byte[4096];
-                    int bytesRead;
-                    while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        // Создаем объект
-                        MemoryStream memoryStream = new MemoryStream(buffer, 0, bytesRead);
-                        BitmapImage bitmapImage = new BitmapImage();
-                        bitmapImage.BeginInit();
-                        bitmapImage.StreamSource = memoryStream;
-                        bitmapImage.EndInit();
+                BitmapImage bitmapImage = new BitmapImage();
+                bitmapImage.BeginInit();
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.StreamSource = memoryStream;
+                bitmapImage.EndInit();
 
-                        // // Устанавливаем изображение в элемент Image
-                        VideoImage = bitmapImage;
-                    }
-
-                    // Через временный файл
-                    /*// Создаем временный файл для сохранения видео
-                    string tempFilePath = Path.GetTempFileName();
-
-                    // Сохраняем видео-поток во временном файле
-                    using (FileStream fileStream = File.Create(tempFilePath))
-                    {
-                        await stream.CopyToAsync(fileStream);
-                    }*/
-                }
+                VideoImage = bitmapImage;
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error occurred: {ex.Message}");
+            MessageBox.Show($"Error displaying frame: {ex.Message}");
         }
     }
 }
